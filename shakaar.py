@@ -8,6 +8,9 @@ from __future__ import division
 from time import sleep
 import sys
 
+g_motor_left_multiplier = -1
+g_motor_right_multiplier = 1
+
 try:
     import ThunderBorg
     TB=ThunderBorg.ThunderBorg()
@@ -28,8 +31,8 @@ try:
             Power to send to right motor, will be inverted to reflect chassis layout
         """
 
-        motor_left_multiplier = 1
-        motor_right_multiplier = -2
+        motor_left_multiplier = g_motor_left_multiplier
+        motor_right_multiplier = g_motor_right_multiplier
 
         # If one wants to see the 'raw' 0-100 values coming in
         # print("source left: {}".format(power_left))
@@ -44,8 +47,8 @@ try:
         # print("right: {}".format(power_right))
 
         # If power is less than 0, we want to turn the motor backwards, otherwise turn it forwards
-        TB.SetMotor1(power_left)
-        TB.SetMotor2(power_right)
+        TB.SetMotor2(power_left)
+        TB.SetMotor1(power_right)
 
     def stop_motors():
         TB.MotorsOff()
@@ -57,6 +60,12 @@ except ImportError:
         """
         No motor hat - print what we would have sent to it if we'd had one.
         """
+
+        motor_left_multiplier = g_motor_left_multiplier
+        motor_right_multiplier = g_motor_left_multiplier
+        power_left = (motor_left_multiplier * power_left) / 100
+        power_right = (motor_right_multiplier * power_right) / 100
+
         print('DEBUG Left: {}, Right: {}'.format(power_left, power_right))
         sleep(0.3)
 
@@ -113,33 +122,53 @@ try:
         try:
             # Bind to any available joystick, this will use whatever's connected as long as the library
             # supports it.
-            with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
-                print('Controller found, press HOME button to exit, use left stick to drive.')
-                print(joystick.controls)
+            with ControllerResource(print_events=False, controller_class=None, hot_zone=0.2, dead_zone=0.1) as joystick:
+                print('Found a controller, HOME to exit, Left Stick to drive')
+
                 # Loop until the joystick disconnects, or we deliberately stop by raising a
                 # RobotStopException
                 while joystick.connected:
+                    print("Connected")
+
                     # Get joystick values from the left analogue stick
                     x_axis, y_axis = joystick['lx', 'ly']
                     # Get power from mixer function
                     power_left, power_right = mixer(yaw=x_axis, throttle=y_axis)
                     # Set motor speeds
                     set_speeds(power_left, power_right)
+
                     # Get a ButtonPresses object containing everything that was pressed since the last
                     # time around this loop.
-                    joystick.check_presses()
+                    button_presses = joystick.check_presses()
+
                     # Print out any buttons that were pressed, if we had any
-                    if joystick.has_presses:
-                        print(joystick.presses)
+                    if button_presses.has_presses:
+                        print('Button presses: {}'.format(button_presses))
+
                     # If home was pressed, raise a RobotStopException to bail out of the loop
                     # Home is generally the PS button for playstation controllers, XBox for XBox etc
-                    if 'home' in joystick.presses:
+                    if 'home' in button_presses:
                         raise RobotStopException()
+
+                    if 'dright' in button_presses:
+                        if 'square' in button_presses:
+                            sys.exit()
+
+                print('Joystick not connected')
+                stop_motors()
+                x_axis, y_axis = joystick['lx', 'ly']
+                print(x_axis)
+                print(y_axis)
+                button_presses = joystick.check_presses()
+                print(button_presses)
+
+
         except IOError:
             # We get an IOError when using the ControllerResource if we don't have a controller yet,
             # so in this case we just wait a second and try again after printing a message.
             print('No controller found yet')
             sleep(1)
+
 except RobotStopException:
     # This exception will be raised when the home button is pressed, at which point we should
     # stop the motors.
