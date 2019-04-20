@@ -1,4 +1,4 @@
-# Code for CamJam EduKit 3 robot
+# Code for Shakaar robot
 #
 # By Mike Horne, based on code by Tom Oinn/Emma Norling code
 
@@ -7,6 +7,7 @@ from __future__ import division
 
 from time import sleep
 import sys
+import subprocess
 
 g_motor_left_multiplier = -1
 g_motor_right_multiplier = 1
@@ -131,9 +132,11 @@ try:
                     print("Connected")
 
                     # Get joystick values from the left analogue stick
-                    x_axis, y_axis = joystick['lx', 'ly']
+                    x_axis, y_axis = joystick['rx', 'ly']
+
                     # Get power from mixer function
                     power_left, power_right = mixer(yaw=x_axis, throttle=y_axis)
+
                     # Set motor speeds
                     set_speeds(power_left, power_right)
 
@@ -152,7 +155,17 @@ try:
 
                     if 'dright' in button_presses:
                         if 'square' in button_presses:
-                            sys.exit()
+                            command = '/usr/bin/sudo /sbin/shutdown -h now'
+                            process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+                            output = process.communicate()[0]
+                            print output
+
+                    if 'dleft' in button_presses:
+                        if 'circle' in button_presses:
+                            command = '/usr/bin/sudo /sbin/shutdown -r now'
+                            process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+                            output = process.communicate()[0]
+                            print output
 
                 print('Joystick not connected')
                 stop_motors()
@@ -173,3 +186,4 @@ except RobotStopException:
     # This exception will be raised when the home button is pressed, at which point we should
     # stop the motors.
     stop_motors()
+    # And exit
