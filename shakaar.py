@@ -9,8 +9,8 @@ from time import sleep
 import sys
 import subprocess
 
-g_motor_left_multiplier = -1
-g_motor_right_multiplier = 1
+g_motor_left_multiplier = -0.5
+g_motor_right_multiplier = 0.5
 
 try:
     import ThunderBorg
@@ -150,7 +150,7 @@ try:
 
                     # If home was pressed, raise a RobotStopException to bail out of the loop
                     # Home is generally the PS button for playstation controllers, XBox for XBox etc
-                    if 'home' in button_presses:
+                    if 'triangle' in button_presses:
                         raise RobotStopException()
 
                     if 'dright' in button_presses:
@@ -167,13 +167,30 @@ try:
                             output = process.communicate()[0]
                             print output
 
+                    if 'r2' in button_presses:
+                        g_motor_left_multiplier = g_motor_left_multiplier - 0.1
+                        g_motor_right_multiplier = g_motor_right_multiplier + 0.1
+
+                    if 'r1' in button_presses:
+                        g_motor_left_multiplier = g_motor_left_multiplier + 0.1
+                        g_motor_right_multiplier = g_motor_right_multiplier - 0.1
+
+                    if g_motor_left_multiplier < -1.0:
+                        g_motor_left_multiplier = -1.0
+
+                    if g_motor_right_multiplier > 1.0:
+                        g_motor_right_multiplier = 1.0
+
+                    if g_motor_left_multiplier > 0:
+                        g_motor_left_multiplier = 0
+
+                    if g_motor_right_multiplier < 0:
+                        g_motor_right_multiplier = 0
+
                 print('Joystick not connected')
                 stop_motors()
                 x_axis, y_axis = joystick['lx', 'ly']
-                print(x_axis)
-                print(y_axis)
                 button_presses = joystick.check_presses()
-                print(button_presses)
 
 
         except IOError:
