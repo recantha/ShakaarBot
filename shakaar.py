@@ -13,7 +13,7 @@ g_motor_left_multiplier = -0.5
 g_motor_right_multiplier = 0.5
 
 try:
-    import ThunderBorg
+    import ThunderBorg3 as ThunderBorg
     TB=ThunderBorg.ThunderBorg()
     TB.Init()
     print("ThunderBorg initialised")
@@ -158,14 +158,14 @@ try:
                             command = '/usr/bin/sudo /sbin/shutdown -h now'
                             process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
                             output = process.communicate()[0]
-                            print output
+                            print(output)
 
                     if 'dleft' in button_presses:
                         if 'circle' in button_presses:
                             command = '/usr/bin/sudo /sbin/shutdown -r now'
                             process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
                             output = process.communicate()[0]
-                            print output
+                            print(output)
 
                     if 'r2' in button_presses:
                         g_motor_left_multiplier = g_motor_left_multiplier - 0.1
